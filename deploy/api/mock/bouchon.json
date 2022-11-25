@@ -1,0 +1,17 @@
+[
+    {
+        "title":"Iphone 13 Pro Max",
+        "price": 1200,
+        "reference": "I13PROMAX" 
+    },
+    {
+        "title": "Iphone 13",
+        "price": 1000,
+        "reference": "I13"
+    },
+    {
+        "title": "Iphone 13 mini",
+        "price": 900,
+        "reference": "I13MINI"
+    }
+]
