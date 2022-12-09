@@ -43,6 +43,20 @@ $app->add(new JwtAuthentication([
     }
 ]));
 
+$app->get('/api/product/search/{name}', function (Request $request, Response $response, $args) {
+    $json = file_get_contents("./mock/bouchon.json");
+    $array = json_decode($json, true);
+    $name = $args ['name'];
+    $array = array_filter($array, function($item) use ($name) {
+        if (stripos($item['name'], $name) !== false) {
+            return true;
+        }
+    });
+    $response->getBody()->write(json_encode ($array));
+    return $response;
+});
+
+
 $app->get('/api/auth/{login}', function (Request $request, Response $response, $args) {
     $login = $args['login'];
     if ($login) 
