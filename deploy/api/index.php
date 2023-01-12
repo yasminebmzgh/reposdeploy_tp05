@@ -69,7 +69,7 @@ $app->add(new JwtAuthentication([
     "algorithm" => ["HS256"],
 
     "path" => ["/api"],
-    "ignore" => ["/api/login"],
+    "ignore" => ["/api/login", "/api/signup"],
     "error" => function ($response, $arguments) {
         $data = array('ERREUR' => 'Connexion', 'ERREUR' => 'JWT Non valide');
         $response = $response->withStatus(401);
