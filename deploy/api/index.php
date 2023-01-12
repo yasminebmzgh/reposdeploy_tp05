@@ -9,8 +9,8 @@ use Firebase\JWT\Key;
 
 
 require_once __DIR__ . '/../vendor/autoload.php';
-require_once __DIR__ . '/../src/Client.php';
-require_once __DIR__ . '/../src/Product.php';
+require_once __DIR__ . '/models/Client.php';
+require_once __DIR__ . '/models/Product.php';
 require_once __DIR__ . '/../bootstrap.php';
 
 const JWT_SECRET = "lala123";
