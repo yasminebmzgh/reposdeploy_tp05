@@ -69,7 +69,7 @@ $app->add(new JwtAuthentication([
     "algorithm" => ["HS256"],
 
     "path" => ["/api"],
-    "ignore" => ["/api/login", "/api/signup"],
+    "ignore" => ["/api/login", "/api/signup", "/api/product"],
     "error" => function ($response, $arguments) {
         $data = array('ERREUR' => 'Connexion', 'ERREUR' => 'JWT Non valide');
         $response = $response->withStatus(401);
@@ -77,18 +77,6 @@ $app->add(new JwtAuthentication([
     }
 ]));
 
-$app->get('/api/product/search/{name}', function (Request $request, Response $response, $args) {
-    $json = file_get_contents("./mock/products.json");
-    $array = json_decode($json, true);
-    $name = $args ['name'];
-    $array = array_filter($array, function($item) use ($name) {
-        if (stripos($item['name'], $name) !== false) {
-            return true;
-        }
-    });
-    $response->getBody()->write(json_encode ($array));
-    return $response;
-});
 $app->post('/login', function (Request $request, Response $response) {
 	$login = $request->getParsedBody()['login'] ?? '';
 	$password = $request->getParsedBody()['password'] ?? '';
@@ -230,6 +218,106 @@ $app->delete('/client', function (Request $request, Response $response) {
 	$entityManager->remove($client);
 	$entityManager->flush();
 	$response->getBody()->write("Client deleted");
+	return $response;
+});
+
+
+$app->get('/product', function (Request $request, Response $response) {
+	global $entityManager;
+	$products = $entityManager->getRepository(Product::class)->findAll();
+	$response->getBody()->write(json_encode($products));
+	return $response;
+});
+
+// Get product by id from database
+$app->get('/product/{id}', function (Request $request, Response $response, $args) {
+	$id = $args['id'];
+	global $entityManager;
+	$product = $entityManager->getRepository(Product::class)->find($id);
+	if ($product) {
+		$response->getBody()->write(json_encode($product));
+	} else {
+		$response = $response->withStatus(401);
+		$response->getBody()->write("Product not found");
+	}
+	return $response;
+});
+
+// Add product to database
+$app->post('/product', function (Request $request, Response $response) {
+	$body = $request->getParsedBody();
+	$title = $body['title'] ?? "";
+	$price = $body['price'] ?? "";
+	$reference = $body['reference'] ?? "";
+
+	if (empty($title) || empty($price) || !preg_match("/^[a-zA-Z0-9\s]+$/", $title) || !preg_match("/^[0-9]+$/", $price)) {
+		$response = $response->withStatus(401);
+		$response->getBody()->write("Bad request");
+		return $response;
+	}
+
+	global $entityManager;
+	$product = new Product();
+	$product->setTitle($title);
+	$product->setPrice($price);
+	$product->setReference($reference);
+	$entityManager->persist($product);
+	$entityManager->flush();
+
+	$response->getBody()->write(json_encode($product));
+	return $response;
+});
+
+$app->put('/product', function (Request $request, Response $response) {
+	$body = $request->getParsedBody();
+	$id = $body['id'] ?? "";
+
+	if (empty($id) || !preg_match("/^[0-9]+$/", $id)) {
+		$response = $response->withStatus(401);
+		$response->getBody()->write("Missing id");
+		return $response;
+	}
+	// Update product in database
+	global $entityManager;
+	$product = $entityManager->getRepository(Product::class)->find($id);
+	if (!$product) {
+		$response = $response->withStatus(401);
+		$response->getBody()->write("Product not found");
+		return $response;
+	}
+	$product = $body["title"] ? $product->setTitle($body["title"]) : $product;
+	$product = $body["price"] ? $product->setPrice($body["price"]) : $product;
+	$product = $body["reference"] ? $product->set($body["reference"]) : $product;
+
+	$entityManager->persist($product);
+	$entityManager->flush();
+	$response->getBody()->write(json_encode($product));
+	return $response;
+});
+
+// Delete product to ./mock/products.json
+$app->delete('/product', function (Request $request, Response $response) {
+	$body = $request->getParsedBody();
+	$id = $body['id'] ?? "";
+
+	// Check format id
+	if (empty($id) || !preg_match("/^[0-9]+$/", $id)) {
+		$response = $response->withStatus(401);
+		$response->getBody()->write("Bad request");
+		return $response;
+	}
+	// Delete product from database
+	global $entityManager;
+	$product = $entityManager->getRepository(Product::class)->find($id);
+	if (!$product) {
+		$response = $response->withStatus(401);
+		$response->getBody()->write("Product not found");
+		return $response;
+	}
+	$entityManager->remove($product);
+	$entityManager->flush();
+
+	$response->getBody()->write("Product deleted");
 	return $response;
 });
 
